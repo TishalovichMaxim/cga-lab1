@@ -19,9 +19,9 @@ public static class MeshDrawer {
             vec4 vec4_2 = vec4List[face.VertIndices[1] - 1];
             vec4 vec4_3 = vec4List[face.VertIndices[2] - 1];
             
-            canvas.DrawLine(color, (vec4_1.x, vec4_1.y), (vec4_2.x, vec4_2.y));
-            canvas.DrawLine(color, (vec4_3.x, vec4_3.y), (vec4_2.x, vec4_2.y));
-            canvas.DrawLine(color, (vec4_1.x, vec4_1.y), (vec4_3.x, vec4_3.y));
+            canvas.DrawLine(color, new vec3(vec4_1), new vec3(vec4_2));
+            canvas.DrawLine(color, new vec3(vec4_2), new vec3(vec4_3));
+            canvas.DrawLine(color, new vec3(vec4_3), new vec3(vec4_1));
         }
     }
 }

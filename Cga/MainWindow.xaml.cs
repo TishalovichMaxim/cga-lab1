@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Numerics;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -94,9 +95,40 @@ public partial class MainWindow : Window
 
     public void Draw()
     {
-        _canvas.Clear();
+        _canvas.Clear(Color.Red);
 
-        _mesh.Draw(_canvas, _res, Color.Blue);
+        _canvas.DrawLine(
+            Color.Green,
+            new vec3(200, 200, 0.5f),
+            new vec3(400, 200, 0.5f)
+            );
+
+        _canvas.DrawLine(
+            Color.Green,
+            new vec3(400, 200, 0.5f),
+            new vec3(400, 400, 0.5f)
+            );
+
+        _canvas.DrawLine(
+            Color.Green,
+            new vec3(400, 400, 0.5f),
+            new vec3(200, 400, 0.5f)
+            );
+
+        _canvas.DrawLine(
+            Color.Green,
+            new vec3(200, 400, 0.5f),
+            new vec3(200, 200, 0.5f)
+            );
+
+        _canvas.DrawTriangle(
+                new Vector3(300, 300, 0),
+                new Vector3(300, 300, 0),
+                new Vector3(300, 300, 0),
+                Color.Blue
+            );
+
+        //_mesh.Draw(_canvas, _res, Color.Blue);
         
         _canvas.Swap();
     }
