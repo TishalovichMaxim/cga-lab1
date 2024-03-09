@@ -2,28 +2,31 @@ using System.Numerics;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Cga.Graphics;
 using Cga.LinearAlgebra;
 using GlmNet;
 
 namespace Cga.Drawing;
 
+delegate void DrawHorizontalLine(int a);
+
 public class WriteableBitmapCanvas
 {
     private static readonly int BytesPerPixel = 4;
-    
+
     private readonly WriteableBitmap _writeableBitmap;
 
     private readonly byte[] _pixelsData;
-    
+
     private readonly float[] _zBuffer;
-    
+
     private int Round(float num) => (int)(num + 0.5);
 
     public int Width => _writeableBitmap.PixelWidth;
-    
+
     public int Height => _writeableBitmap.PixelHeight;
 
-    
+
     public WriteableBitmapCanvas(WriteableBitmap writeableBitmap)
     {
         _writeableBitmap = writeableBitmap;
@@ -33,7 +36,7 @@ public class WriteableBitmapCanvas
         _zBuffer = new float[nPixels];
         //Array.Fill(_zBuffer, 1.1f);
     }
-    
+
     public void DrawPixel(Color color, byte[] pixelsData, int stride, (int x, int y, float z) pos)
     {
         int pixelNumber = pos.y * _writeableBitmap.PixelWidth + pos.x;
@@ -44,7 +47,7 @@ public class WriteableBitmapCanvas
         }
 
         _zBuffer[pixelNumber] = pos.z;
-        
+
         DrawPixel(color, pixelsData, stride, (pos.x, pos.y));
     }
 
@@ -64,7 +67,7 @@ public class WriteableBitmapCanvas
         //        DrawPixel(color, _pixelsData, Width, (j, i, -1.0f));
         //    }
         //}
-        
+
         Array.Fill(_zBuffer, 1.1f);
     }
 
@@ -72,11 +75,11 @@ public class WriteableBitmapCanvas
     {
         Int32Rect dirtyRect = new Int32Rect(
             0, 0, _writeableBitmap.PixelWidth, _writeableBitmap.PixelHeight);
-        
+
         _writeableBitmap.WritePixels(
             dirtyRect,
             _pixelsData,
-            _writeableBitmap.PixelWidth*BytesPerPixel,
+            _writeableBitmap.PixelWidth * BytesPerPixel,
             0
             );
     }
@@ -98,8 +101,8 @@ public class WriteableBitmapCanvas
 
         for (int i = 0; i <= maxDelta; i++)
         {
-            int x = Round(from.Item1 + stepX*i);
-            int y = Round(from.Item2 + stepY*i);
+            int x = Round(from.Item1 + stepX * i);
+            int y = Round(from.Item2 + stepY * i);
             float z = from.Item3 + stepZ * i;
             DrawPixel(
                 color,
@@ -141,31 +144,31 @@ public class WriteableBitmapCanvas
             Math.Min(pi1.x, pi2.x),
             pi3.x
             );
-        
+
         int right = Math.Max(
             Math.Max(pi1.x, pi2.x),
             pi3.x
             );
-        
+
         int top = Math.Min(
             Math.Min(pi1.y, pi2.y),
             pi3.y
             );
-        
+
         int bottom = Math.Max(
             Math.Max(pi1.y, pi2.y),
             pi3.y
             );
 
-        byte[] tempPixelsData = new byte[(right - left + 1)*(bottom - left + 1)*BytesPerPixel];
-        
+        byte[] tempPixelsData = new byte[(right - left + 1) * (bottom - left + 1) * BytesPerPixel];
+
         DrawLine(color,
             tempPixelsData,
             right - left + 1,
             (pi1.x - left, pi1.y - top, p1.z),
             (pi2.x - left, pi2.y - top, p2.z)
             );
-        
+
         DrawLine(color,
             tempPixelsData,
             right - left + 1,
@@ -179,6 +182,21 @@ public class WriteableBitmapCanvas
         return (int y) =>
         {
             return (p1x + (p2x - p1x) * ((float)(y - p1y)) / (p2y - p1y));
+        };
+    }
+
+    private Func<int, (float x, float z, Vector3 color)> getPosFunc(
+        int p1x, int p1y, float p1z, Vector3 c1,
+        int p2x, int p2y, float p2z, Vector3 c2
+        )
+    {
+        return (int y) =>
+        {
+            float t = ((float)(y - p1y)) / (p2y - p1y);
+            float x = p1x + (p2x - p1x) * t;
+            float z = p1z + (p2z - p1z) * t;
+            Vector3 c = c1 + (c2 - c1) * t;
+            return (x, z, c);
         };
     }
 
@@ -215,7 +233,7 @@ public class WriteableBitmapCanvas
         Func<int, float> leftFunc = firstFunc;
         Func<int, float> rightFunc = longFunc;
 
-        if (p2x < p3x)
+        if (p2x < p3x && p3x > p1x)
         {
             leftFunc = longFunc;
             rightFunc = firstFunc;
@@ -285,7 +303,7 @@ public class WriteableBitmapCanvas
             } else
             {
                 leftFunc = secondFunc;
-            } 
+            }
 
             for (int i = p3y + 1; i <= p2y; i++)
             {
@@ -301,5 +319,224 @@ public class WriteableBitmapCanvas
                 }
             }
         }
+    }
+
+    public void DrawTrianglePart(
+        int top,
+        int bottom,
+        Func<int, float> leftFunc,
+        Func<int, float> rightFunc
+        )
+    {
+
+    }
+
+    public void DrawTriangle(Vector3 p1, Vector3 p2, Vector3 p3, Vector3 c1, Vector3 c2, Vector3 c3)
+    {
+        if (p2.Y < p1.Y)
+        {
+            (p1, p2) = (p2, p1);
+        }
+
+        if (p2.Y < p3.Y)
+        {
+            (p2, p3) = (p3, p2);
+        }
+
+        if (p1.Y > p3.Y)
+        {
+            (p1, p3) = (p3, p1);
+        }
+
+        int p1x = (int)p1.X;
+        int p1y = (int)p1.Y;
+
+        int p2x = (int)p2.X;
+        int p2y = (int)p2.Y;
+
+        int p3x = (int)p3.X;
+        int p3y = (int)p3.Y;
+
+        Func<int, (float, float, Vector3)> longFunc = getPosFunc(p1x, p1y, p1.Z, c1, p2x, p2y, p2.Z, c2);
+        Func<int, (float, float, Vector3)> firstFunc = getPosFunc(p1x, p1y, p1.Z, c1, p3x, p3y, p3.Z, c3);
+        Func<int, (float, float, Vector3)> secondFunc = getPosFunc(p3x, p3y, p3.Z, c3, p2x, p2y, p2.Z, c2);
+
+        Func<int, (float, float, Vector3)> leftFunc = firstFunc;
+        Func<int, (float, float, Vector3)> rightFunc = longFunc;
+
+        if (
+            (p3x > p2x && p2x > p1x)
+            || (p3x > p1x && p1x > p2x)
+            || ((p1x > p3x && p3x > p2x))
+            
+        ) {
+            leftFunc = longFunc;
+            rightFunc = firstFunc;
+        }
+
+        if (p1y == p3y)
+        {
+            int left = p1x;
+            int right = p1x;
+
+            if (p1x > p3x)
+            {
+                left = p3x;
+            }
+            else
+            {
+                right = p1x;
+            }
+
+            for (int j = left; j <= right; j++)
+            {
+                Vector3 currColor = Vector3.Lerp(c3, c1, ((float)(j - left)) / (right - left));
+                DrawPixel(new Color(currColor), _pixelsData, Width, (j, p1y, 0.01f));//change 0.01f here
+            }
+        }
+        else
+        {
+            for (int i = p1y; i <= p3y; i++)
+            {
+                (float x, float z, Vector3 c) val12 = rightFunc(i);
+                (float x, float z, Vector3 c) val13 = leftFunc(i);
+
+                int right = val12.x.NearInt();
+                int left = val13.x.NearInt();
+
+                if (right < left)
+                {
+                    (right, left) = (left, right);
+                }
+
+                //Vector3 leftColor = Vector3.Lerp(c1, c3, (float)(i - p1y)/(p3y - p1y));
+                //Vector3 rightColor = Vector3.Lerp(c1, c2, ((float)(i - p1y))/(p2y - p1y));
+
+                for (int j = left; j <= right; j++)
+                {
+                    Vector3 currColor = Vector3.Lerp(val13.c, val12.c, ((float)(j - left - 0.0001f))/(right - left - 0.0001f));
+                    float z = val13.z + (val12.z - val13.z) * ((float)(j - left - 0.0001f)) / (right - left - 0.0001f);
+                    DrawPixel(new Color(currColor), _pixelsData, Width, (j, i, z));//change 0.01f here
+                }
+            }
+        }
+
+        if (p2y == p3y)
+        {
+            int left = p2x;
+            int right = p2x;
+
+            if (p2x > p3x)
+            {
+                left = p3x;
+            }
+            else
+            {
+                right = p1x;
+            }
+
+            for (int j = left; j <= right; j++)
+            {
+                Vector3 currColor = Vector3.Lerp(c3, c2, ((float)(j - left - 0.0001f)) / (right - left - 0.0001f));
+                DrawPixel(new Color(currColor), _pixelsData, Width, (j, p2y, 0.01f));//change 0.01f here
+            }
+        }
+        else
+        {
+            if ((p3x > p2x && p2x > p1x) || (p3x > p1x && p1x > p2x) || (p1x > p3x && p3x > p2x))
+            {
+                rightFunc = secondFunc;
+            } 
+            else
+            {
+                leftFunc = secondFunc;
+            } 
+
+            for (int i = p3y + 1; i <= p2y; i++)
+            {
+                (float x, float z, Vector3 c) val12 = rightFunc(i);
+                (float x, float z, Vector3 c) val13 = leftFunc(i);
+
+                int right = val12.x.NearInt();
+                int left = val13.x.NearInt();
+
+                if (right < left)
+                {
+                    (right, left) = (left, right);
+                }
+                //Vector3 leftColor = Vector3.Lerp(c3, c2, (float)(i - p3y)/(p2y - p3y));
+                //Vector3 rightColor = Vector3.Lerp(c1, c2, ((float)(i - p1y))/(p2y - p1y));
+
+                for (int j = left; j <= right; j++)
+                {
+                    Vector3 currColor = Vector3.Lerp(val13.c, val12.c, ((float)(j - left - 0.0001f)) / (right - left - 0.0001f));
+                    float z = val13.z + (val12.z - val13.z)*((float)(j - left)) / (right - left);
+                    DrawPixel(new Color(currColor), _pixelsData, Width, (j, i, z));//change 0.01f here
+                }
+            }
+        }
+    }
+
+
+    public void ScanLine(Vec3<float> p1, Vec3<float> p2, Vec3<float> p3)
+    {
+        if (p2.Y < p1.Y)
+        {
+            (p1, p2) = (p2, p1);
+        }
+
+        if (p2.Y < p3.Y)
+        {
+            (p2, p3) = (p3, p2);
+        }
+
+        if (p1.Y > p3.Y)
+        {
+            (p1, p3) = (p3, p1);
+        }
+
+        int p1x = (int)p1.X;
+        int p1y = (int)p1.Y;
+
+        int p2x = (int)p2.X;
+        int p2y = (int)p2.Y;
+
+        int p3x = (int)p3.X;
+        int p3y = (int)p3.Y;
+
+        if (p1y == p3y)
+        {
+            
+        }
+    }
+
+
+    public void ScanLine(Vector3 p1, Vector3 p2, Vector3 p3, Color color)
+    {
+        if (p2.Y < p1.Y)
+        {
+            (p1, p2) = (p2, p1);
+        }
+
+        if (p2.Y < p3.Y)
+        {
+            (p2, p3) = (p3, p2);
+        }
+
+        if (p1.Y > p3.Y)
+        {
+            (p1, p3) = (p3, p1);
+        }
+
+        int p1x = (int)p1.X;
+        int p1y = (int)p1.Y;
+
+        int p2x = (int)p2.X;
+        int p2y = (int)p2.Y;
+
+        int p3x = (int)p3.X;
+        int p3y = (int)p3.Y;
+
+
     }
 }
