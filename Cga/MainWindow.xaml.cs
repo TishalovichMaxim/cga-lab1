@@ -1,14 +1,7 @@
 ﻿using System.Numerics;
-using System.Text;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using Cga.Drawing;
 using Cga.Graphics;
 using Cga.LinearAlgebra;
@@ -36,12 +29,16 @@ public partial class MainWindow : Window
     private mat4 _viewport;
 
     private mat4 _res;
+
+    private vec3 target = new vec3(0, 0, 0);
+
+    private vec3 eye = new vec3 (0, 2, 4);
     
     public MainWindow()
     {
         InitializeComponent();
 
-        _mesh = _objParser.Parse("./Models/cube.obj");
+        _mesh = _objParser.Parse("./Models/head.obj");
         
         Loaded += MainWindow_Loaded;
     }
@@ -67,13 +64,13 @@ public partial class MainWindow : Window
         
         _view = _matrixManager.GetViewMatrix(
             new vec3(0, 1, 0),
-            new vec3 (0, 0, 4),
-            new vec3(0, 0, 0)
+            eye,
+            target
         );
         
         _projection = _matrixManager.GetProjectionMatrix(
-            0.1f,
-            200.0f,
+            1.0f,
+            100.0f,
             ((float)(_canvas.Width))/_canvas.Height,
            50 
         );
@@ -97,39 +94,14 @@ public partial class MainWindow : Window
     {
         _canvas.Clear(Color.Red);
 
-        _canvas.DrawLine(
-            Color.Green,
-            new vec3(200, 200, 0.5f),
-            new vec3(400, 200, 0.5f)
-            );
+        mat4 delta = _matrixManager
+            .GetRotateY(1.0f);
 
-        _canvas.DrawLine(
-            Color.Green,
-            new vec3(400, 200, 0.5f),
-            new vec3(400, 400, 0.5f)
-            );
+        _model = _model * delta;
+        _res = _viewport * _projection * _view * _model;
 
-        _canvas.DrawLine(
-            Color.Green,
-            new vec3(400, 400, 0.5f),
-            new vec3(200, 400, 0.5f)
-            );
+        _mesh.Draw(_canvas, _res, Color.Blue, glm.normalize(eye - target), _model);
 
-        _canvas.DrawLine(
-            Color.Green,
-            new vec3(200, 400, 0.5f),
-            new vec3(200, 200, 0.5f)
-            );
-
-        _canvas.DrawTriangle(
-                new Vector3(300, 300, 0),
-                new Vector3(300, 300, 0),
-                new Vector3(300, 300, 0),
-                Color.Blue
-            );
-
-        //_mesh.Draw(_canvas, _res, Color.Blue);
-        
         _canvas.Swap();
     }
 }

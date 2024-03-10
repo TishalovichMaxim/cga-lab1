@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace Cga.Drawing;
 
 public struct Color
@@ -22,5 +24,18 @@ public struct Color
         this.G = g;
         this.B = b;
         this.A = a;
+    }
+
+    public Color(Vector3 color)
+    {
+        this.R = (byte)color.X;
+        this.G = (byte)color.Y;
+        this.B = (byte)color.Z;
+        this.A = 255;
+    }
+
+    public Vector3 ToVector3()
+    {
+        return new Vector3(R, G, B);
     }
 }

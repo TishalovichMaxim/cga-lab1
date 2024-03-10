@@ -63,8 +63,14 @@ public class MatrixManager
     {
         vec3 vec3 = glm.normalize(eye - target);
         vec3 x1 = glm.normalize(glm.cross(up, vec3));
-        vec3 x2 = up;
-        return this.CreateMatrix(x1.x, x1.y, x1.z, -glm.dot(x1, eye), x2.x, x2.y, x2.z, -glm.dot(x2, eye), vec3.x, vec3.y, vec3.z, -glm.dot(vec3, eye), 0.0f, 0.0f, 0.0f, 1f);
+        vec3 x2 = glm.normalize(glm.cross(vec3, x1));
+
+        return CreateMatrix(
+            x1.x, x1.y, x1.z, -glm.dot(x1, eye),
+            x2.x, x2.y, x2.z, -glm.dot(x2, eye),
+            vec3.x, vec3.y, vec3.z, -glm.dot(vec3, eye),
+            0.0f, 0.0f, 0.0f, 1f
+            );
     }
 
     public mat4 GetProjectionMatrix(float zNear, float zFar, float aspect, float fov)
