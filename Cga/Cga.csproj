@@ -16,7 +16,13 @@
       <None Update="Models\cube.obj">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
+      <None Update="Models\export3dcoat.obj">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
       <None Update="Models\head.obj">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="Models\mancubus.obj">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
       <None Update="Models\teapot.obj">

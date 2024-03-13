@@ -32,7 +32,7 @@ public partial class MainWindow : Window
 
     private vec3 target = new vec3(0, 0, 0);
 
-    private vec3 eye = new vec3 (0, 2, 4);
+    private vec3 eye = new vec3 (0, 2, 5);
     
     public MainWindow()
     {
@@ -100,7 +100,7 @@ public partial class MainWindow : Window
         _model = _model * delta;
         _res = _viewport * _projection * _view * _model;
 
-        _mesh.Draw(_canvas, _res, Color.Blue, glm.normalize(eye - target), _model);
+        _mesh.Draw(_canvas, _res, Color.Blue, glm.normalize(eye - target), (target - eye), _model);
 
         _canvas.Swap();
     }
