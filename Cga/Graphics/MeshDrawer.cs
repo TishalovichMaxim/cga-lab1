@@ -12,9 +12,9 @@ public static class MeshDrawer {
         return coeff * color;
     }
 
-    private static Vector3 GetDiffuseColor(float coeff, Vector3 normal, Vector3 view, Vector3 color)
+    private static Vector3 GetDiffuseColor(float coeff, Vector3 normal, Vector3 light, Vector3 color)
     {
-        return coeff * (normal * view) * color;
+        return coeff * (normal * light) * color;
     }
 
     public static void Draw(
