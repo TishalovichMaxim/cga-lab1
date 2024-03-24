@@ -6,8 +6,22 @@ using GlmNet;
 namespace Cga.Graphics;
 
 public static class MeshDrawer {
-    public static void Draw(this Mesh mesh, WriteableBitmapCanvas canvas, mat4 resMat, Color color, vec3 backLight, vec3 view, mat4 model)
+
+    private static Vector3 GetAmbitentColor(float coeff, Vector3 color)
     {
+        return coeff * color;
+    }
+
+    public static void Draw(
+        this Mesh mesh,
+        WriteableBitmapCanvas canvas,
+        mat4 resMat,
+        Color color,
+        vec3 backLight,
+        vec3 view,
+        mat4 model,
+        Vector3 lightCoeffs
+    ) {
         List<vec4> vec4List = new List<vec4>((IEnumerable<vec4>)mesh.Vertices);
         for (int index = 0; index < vec4List.Count; ++index)
         {
