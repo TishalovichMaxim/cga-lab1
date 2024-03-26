@@ -7,21 +7,29 @@ namespace Cga.Graphics;
 
 public static class MeshDrawer {
 
+    private static readonly LightCoeffs coeffs = new LightCoeffs(0.0f, 0.0f, 0.0f, 0.0f);
+
     private static Vector3 GetAmbitentColor(float coeff, Vector3 color)
     {
         return coeff * color;
     }
 
+    //normal - normalized
+    //light - normalized
     private static Vector3 GetDiffuseColor(float coeff, Vector3 normal, Vector3 light, Vector3 color)
     {
-        return coeff * (normal * light) * color;
+        return coeff * MathF.Max(0.0f, Vector3.Dot(normal, -light)) * color;
     }
 
+    //normal - normalized
+    //light - normalized
     private static Vector3 GetSpecularColor(float coeff, float shinyCoeff, Vector3 light, Vector3 normal, Vector3 view, Vector3 color)
     {
-        Vector3 r = light - 2 * (light * normal) * normal;
+        Vector3 r = light + 2 * Vector3.Dot(light, normal) * normal;
 
-        return coeff * Math.Pow((r * view), shinyCoeff) * color;
+        r = Vector3.Normalize(r);//i think that i can delete it.
+
+        return coeff * MathF.Pow(Vector3.Dot(r, view), shinyCoeff) * color;
     }
 
     public static void Draw(
