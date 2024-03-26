@@ -17,6 +17,13 @@ public static class MeshDrawer {
         return coeff * (normal * light) * color;
     }
 
+    private static Vector3 GetSpecularColor(float coeff, float shinyCoeff, Vector3 light, Vector3 normal, Vector3 view, Vector3 color)
+    {
+        Vector3 r = light - 2 * (light * normal) * normal;
+
+        return coeff * Math.Pow((r * view), shinyCoeff) * color;
+    }
+
     public static void Draw(
         this Mesh mesh,
         WriteableBitmapCanvas canvas,
