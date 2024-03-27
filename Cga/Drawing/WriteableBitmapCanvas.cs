@@ -135,21 +135,44 @@ public class WriteableBitmapCanvas
         pixelsData[offset + 3] = color.A;
     }
 
-    public void DirtyScanLine(Vector3 p1, Vector3 p2, Vector3 p3, Color color)
+    private void ScanLineCommon(
+        int y,
+        int left,
+        float zLeft,
+        int right,
+        float zRight,
+        Color color
+        )
     {
-        if (p2.Y < p1.Y)
+        if (left > right)
         {
-            (p1, p2) = (p2, p1);
+            (left, right) = (right, left);
+            (zLeft, zRight) = (zRight, zLeft);
         }
 
-        if (p2.Y < p3.Y)
+        for (int x = left; x < right; x++)
         {
-            (p2, p3) = (p3, p2);
+            float t = ((float)(x - left)) / (right - left);
+            float z = float.Lerp(zLeft, zRight, t);
+            DrawPixel(color, _pixelsData, Width, (x, y, z));
+        }
+    }
+
+    public void ScanLine(Vector3 p1, Vector3 p2, Vector3 p3, Color color)
+    {
+        if (p1.Y > p2.Y)
+        {
+            (p1, p2) = (p2, p1);
         }
 
         if (p1.Y > p3.Y)
         {
             (p1, p3) = (p3, p1);
+        }
+
+        if (p2.Y > p3.Y)
+        {
+            (p2, p3) = (p3, p2);
         }
 
         int p1x = (int)p1.X;
@@ -161,138 +184,32 @@ public class WriteableBitmapCanvas
         int p3x = (int)p3.X;
         int p3y = (int)p3.Y;
 
-        if (p1y == p2y && p2y == p3y)
+        for (int y = p1y; y < p2y; y++)
         {
-            return;
+            float tLeft = ((float)(y - p1y)) / (p2y - p1y);
+            float tRight = ((float)(y - p1y)) / (p3y - p1y);
+
+            int left = (int)float.Lerp(p1x, p2x, tLeft);
+            float zLeft = float.Lerp(p1.Z, p2.Z, tLeft);
+
+            int right = (int)float.Lerp(p1x, p3x, tRight);
+            float zRight = float.Lerp(p1.Z, p3.Z, tRight);
+
+            ScanLineCommon(y, left, zLeft, right, zRight, color);
         }
 
-        if (p1y == p3y)
+        for (int y = p2y; y < p3y; y++)
         {
-            for (int y = p1y; y <= p2y; y++)
-            {
-                float t = ((float)(y - p1y)) / (p2y - p1y);
+            float tLeft = ((float)(y - p2y)) / (p3y - p2y);
+            float tRight = ((float)(y - p1y)) / (p3y - p1y);
 
-                int left = (int)(p3x + t*(p2x - p3x));
-                int right = (int)(p1x + t*(p2x - p1x));
+            int left = (int)float.Lerp(p2x, p3x, tLeft);
+            float zLeft = float.Lerp(p2.Z, p3.Z, tLeft);
 
-                float zLeft = p3.Z + (p2.Z - p3.Z) * t;
-                float zRight = p1.Z + (p2.Z - p1.Z) * t;
+            int right = (int)float.Lerp(p1x, p3x, tRight);
+            float zRight = float.Lerp(p1.Z, p3.Z, tRight);
 
-                if (left > right)
-                {
-                    (left, right) = (right, left);
-                    (zLeft, zRight) = (zRight, zLeft);
-                }
-                
-                if (left != right)
-                {
-                    for (int x = left; x <= right; x++)
-                    {
-                        float z = zLeft + (zRight - zLeft)*(((float)(x - left))/(right - left));
-                        DrawPixel(color, _pixelsData, Width, (x, y, z));
-                    }
-                }
-                else
-                {
-                    DrawPixel(color, _pixelsData, Width, (left, y, zLeft));
-                }
-            }
-        }
-        else if (p3y == p2y)
-        {
-            for (int y = p1y; y <= p2y; y++)
-            {
-                float t = ((float)(y - p1y))/(p2y - p1y);
-
-                int left = (int)(p1x + (p3x - p1x) * t);
-                int right= (int)(p1x + (p2x - p1x) * t);
-
-                float zLeft = p1.Z + (p3.Z - p1.Z)*t;
-                float zRight = p1.Z + (p2.Z - p1.Z)*t;
-
-                if (left > right)
-                {
-                    (left, right) = (right, left);
-                    (zLeft, zRight) = (zRight, zLeft);
-                }
-
-                if (left != right)
-                {
-                    for (int x = left; x <= right; x++)
-                    {
-                        float z = zLeft + (zRight - zLeft)*(((float)(x - left))/(right - left));
-                        DrawPixel(color, _pixelsData, Width, (x, y, z));
-                    }
-                }
-                else
-                {
-                    DrawPixel(color, _pixelsData, Width, (left, y, zLeft));
-                }
-            }
-        }
-        else
-        {
-            for (int y = p1y; y <= p3y; y++)
-            {
-                float tLeft = ((float)(y - p1y))/(p3y - p1y);
-                float tRight = ((float)(y - p1y))/(p2y - p1y);
-
-                int left = (int)(p1x + (p3x - p1x)*tLeft);
-                int right = (int)(p1x + (p2x - p1x)*tRight);
-
-                float zLeft = p1.Z + (p3.Z - p1.Z) * tLeft;
-                float zRight = p1.Z + (p2.Z - p1.Z) * tRight;
-
-                if (left > right)
-                {
-                    (left, right) = (right, left);
-                    (zLeft, zRight) = (zRight, zLeft);
-                }
-
-                if (left != right)
-                {
-                    for (int x = left; x <= right; x++)
-                    {
-                        float z = zLeft + (zRight - zLeft)*(((float)(x - left))/(right - left));
-                        DrawPixel(color, _pixelsData, Width, (x, y, z));
-                    }
-                }
-                else
-                {
-                    DrawPixel(color, _pixelsData, Width, (left, y, zLeft));
-                }
-            }
-
-            for (int y = p3y + 1; y <= p2y; y++)
-            {
-                float tLeft = ((float)(y - p3y))/(p2y - p3y);
-                float tRight = ((float)(y - p1y))/(p2y - p1y);
-
-                int left = (int)(p3x + (p2x - p3x)*tLeft);
-                int right = (int)(p1x + (p2x - p1x)*tRight);
-
-                float zLeft = p3.Z + (p2.Z - p3.Z) * tLeft;
-                float zRight = p1.Z + (p2.Z - p1.Z) * tRight;
-
-                if (left > right)
-                {
-                    (left, right) = (right, left);
-                    (zLeft, zRight) = (zRight, zLeft);
-                }
-
-                if (left != right)
-                {
-                    for (int x = left; x <= right; x++)
-                    {
-                        float z = zLeft + (zRight - zLeft)*(((float)(x - left))/(right - left));
-                        DrawPixel(color, _pixelsData, Width, (x, y, z));
-                    }
-                }
-                else
-                {
-                    DrawPixel(color, _pixelsData, Width, (left, y, zLeft));
-                }
-            }
+            ScanLineCommon(y, left, zLeft, right, zRight, color);
         }
     }
 }
