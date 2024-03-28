@@ -1,5 +1,4 @@
 using System.Numerics;
-using System.Windows.Controls;
 using Cga.Drawing;
 using GlmNet;
 
@@ -7,7 +6,7 @@ namespace Cga.Graphics;
 
 public static class MeshDrawer {
 
-    private static readonly LightCoeffs coeffs = new LightCoeffs(0.0f, 0.0f, 0.0f, 0.0f);
+    public static readonly LightCoeffs coeffs = new LightCoeffs(0.15f, 0.4f, 0.2f, 4.0f);
 
     private static Vector3 GetAmbitentColor(float coeff, Vector3 color)
     {
@@ -36,32 +35,40 @@ public static class MeshDrawer {
         this Mesh mesh,
         WriteableBitmapCanvas canvas,
         mat4 resMat,
-        Color color,
-        vec3 backLight,
         vec3 view,
         mat4 model,
-        Vector3 lightCoeffs
+        LightCoeffs lightCoeffs,
+        Vector3 lightPos,
+        Vector3 color,
+        Vector3 eye
     ) {
-        List<vec4> vec4List = new List<vec4>((IEnumerable<vec4>)mesh.Vertices);
-        for (int index = 0; index < vec4List.Count; ++index)
-        {
-            vec4List[index] = resMat * vec4List[index];
-            vec4List[index] /= vec4List[index].w;
-        }
+        Vector3 ambientColor = lightCoeffs.ka * color;
 
-        mat3 normalsResMat = new mat3(
+        List<vec4> vec4List = new List<vec4>((IEnumerable<vec4>)mesh.Vertices);
+        List<vec4> worldVertices = new List<vec4>();
+
+        mat3 model3 = new mat3(
                 new vec3(model[0]),
                 new vec3(model[1]),
                 new vec3(model[2])
             );
 
+        for (int index = 0; index < vec4List.Count; ++index)
+        {
+            vec4 worldVertex = model * vec4List[index];
+            worldVertex /= worldVertex.w;
+            
+            worldVertices.Add(worldVertex);
+
+            vec4List[index] = resMat * vec4List[index];
+            vec4List[index] /= vec4List[index].w;
+        }
+
         List<vec3> normals = new List<vec3>((IEnumerable<vec3>)mesh.Normals);
         for (int index = 0; index < normals.Count; ++index)
         {
-            normals[index] = normalsResMat * normals[index];
+            normals[index] = model3 * normals[index];
         }
-
-        vec3 baseColor = new vec3(color.R, color.G, color.B);
 
         foreach (Face face in mesh.Faces)
         {
@@ -80,17 +87,37 @@ public static class MeshDrawer {
             vec3 normal2 = normals[face.NormIndices[1] - 1];
             vec3 normal3 = normals[face.NormIndices[2] - 1];
 
-            float intensity1 = float.Max(glm.dot(normal1, backLight), 0.0f);
-            float intensity2 = float.Max(glm.dot(normal2, backLight), 0.0f);
-            float intensity3 = float.Max(glm.dot(normal3, backLight), 0.0f);
+            vec4 world1 = worldVertices[face.VertIndices[0] - 1];
+            vec4 world2 = worldVertices[face.VertIndices[1] - 1];
+            vec4 world3 = worldVertices[face.VertIndices[2] - 1];
 
-            vec3 resCol = ((intensity1 + intensity2 + intensity3) / 3) * baseColor;
-
-            canvas.DirtyScanLine(
+            Vertex vert1 = new Vertex(
                 new Vector3(vertex1.x, vertex1.y, vertex1.z),
+                new Vector3(world1.x, world1.y, world1.z),
+                new Vector3(normal1.x, normal1.y, normal1.z)
+                );
+
+            Vertex vert2 = new Vertex(
                 new Vector3(vertex2.x, vertex2.y, vertex2.z),
+                new Vector3(world2.x, world2.y, world2.z),
+                new Vector3(normal2.x, normal2.y, normal2.z)
+                );
+
+            Vertex vert3 = new Vertex(
                 new Vector3(vertex3.x, vertex3.y, vertex3.z),
-                new Color((byte)resCol.x, (byte)resCol.y, (byte)resCol.z)
+                new Vector3(world3.x, world3.y, world3.z),
+                new Vector3(normal3.x, normal3.y, normal3.z)
+                );
+
+            canvas.ScanLine(
+                vert1,
+                vert2,
+                vert3,
+                ambientColor,
+                color,
+                lightCoeffs,
+                lightPos,
+                eye
                 );
         }
     }

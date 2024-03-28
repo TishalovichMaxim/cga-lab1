@@ -1,7 +1,5 @@
 using System.Numerics;
-using System.Security.Cryptography.Xml;
 using System.Windows;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Cga.Graphics;
 using Cga.LinearAlgebra;
@@ -139,41 +137,78 @@ public class WriteableBitmapCanvas
         int y,
         int left,
         float zLeft,
+        Vector3 normalLeft,
+        Vector3 worldLeft,
         int right,
         float zRight,
-        Color color
+        Vector3 normalRight,
+        Vector3 worldRight,
+        Vector3 ambientColor,
+        Vector3 color,
+        LightCoeffs lightCoeffs,
+        Vector3 lightPos,
+        Vector3 eye
         )
     {
         if (left > right)
         {
             (left, right) = (right, left);
             (zLeft, zRight) = (zRight, zLeft);
+            (normalLeft, normalRight) = (normalRight, normalLeft);
+            (worldLeft, worldRight) = (worldRight, worldLeft);
         }
 
         for (int x = left; x < right; x++)
         {
             float t = ((float)(x - left)) / (right - left);
+
             float z = float.Lerp(zLeft, zRight, t);
-            DrawPixel(color, _pixelsData, Width, (x, y, z));
+
+            Vector3 normal = Vector3.Normalize(Vector3.Lerp(normalLeft, normalRight, t));
+            Vector3 world = Vector3.Lerp(worldLeft, worldRight, t);
+
+            Vector3 light = -Vector3.Normalize(world - lightPos);
+            Vector3 diffuseColor = lightCoeffs.kd * MathF.Max(0.0f, Vector3.Dot(normal, light)) * color;
+
+            Vector3 reflected = light - 2 * Vector3.Dot(light, normal) * normal;
+            Vector3 view = -Vector3.Normalize(world - eye);
+
+            Vector3 specularColor = lightCoeffs.ks * MathF.Pow(Vector3.Dot(reflected, view), lightCoeffs.shiny) * color;
+
+            DrawPixel(new Color(ambientColor + diffuseColor + specularColor), _pixelsData, Width, (x, y, z));
         }
     }
 
-    public void ScanLine(Vector3 p1, Vector3 p2, Vector3 p3, Color color)
+    public void ScanLine(
+        Vertex vertex1,
+        Vertex vertex2,
+        Vertex vertex3,
+        Vector3 ambientColor,
+        Vector3 color,
+        LightCoeffs lightCoeffs,
+        Vector3 lightSourcePos,
+        Vector3 eye
+        )
     {
-        if (p1.Y > p2.Y)
+
+        if (vertex1.ScreenPos.Y > vertex2.ScreenPos.Y)
         {
-            (p1, p2) = (p2, p1);
+            (vertex1, vertex2) = (vertex2, vertex1);
         }
 
-        if (p1.Y > p3.Y)
+        if (vertex1.ScreenPos.Y > vertex3.ScreenPos.Y)
         {
-            (p1, p3) = (p3, p1);
+            (vertex1, vertex3) = (vertex3, vertex1);
         }
 
-        if (p2.Y > p3.Y)
+        if (vertex2.ScreenPos.Y > vertex3.ScreenPos.Y)
         {
-            (p2, p3) = (p3, p2);
+            (vertex2, vertex3) = (vertex3, vertex2);
         }
+
+        Vector3 p1 = vertex1.ScreenPos;
+        Vector3 p2 = vertex2.ScreenPos;
+        Vector3 p3 = vertex3.ScreenPos;
 
         int p1x = (int)p1.X;
         int p1y = (int)p1.Y;
@@ -191,11 +226,15 @@ public class WriteableBitmapCanvas
 
             int left = (int)float.Lerp(p1x, p2x, tLeft);
             float zLeft = float.Lerp(p1.Z, p2.Z, tLeft);
+            Vector3 normalLeft = Vector3.Lerp(vertex1.Normal, vertex2.Normal, tLeft);
+            Vector3 worldLeft = Vector3.Lerp(vertex1.WorldPos, vertex2.WorldPos, tLeft);
 
             int right = (int)float.Lerp(p1x, p3x, tRight);
             float zRight = float.Lerp(p1.Z, p3.Z, tRight);
+            Vector3 normalRight = Vector3.Lerp(vertex1.Normal, vertex3.Normal, tRight);
+            Vector3 worldRight = Vector3.Lerp(vertex1.WorldPos, vertex3.WorldPos, tRight);
 
-            ScanLineCommon(y, left, zLeft, right, zRight, color);
+            ScanLineCommon(y, left, zLeft, normalLeft, worldLeft, right, zRight, normalRight, worldRight, ambientColor, color, lightCoeffs, lightSourcePos, eye);
         }
 
         for (int y = p2y; y < p3y; y++)
@@ -205,11 +244,15 @@ public class WriteableBitmapCanvas
 
             int left = (int)float.Lerp(p2x, p3x, tLeft);
             float zLeft = float.Lerp(p2.Z, p3.Z, tLeft);
+            Vector3 normalLeft = Vector3.Lerp(vertex2.Normal, vertex3.Normal, tLeft);
+            Vector3 worldLeft = Vector3.Lerp(vertex2.WorldPos, vertex3.WorldPos, tLeft);
 
             int right = (int)float.Lerp(p1x, p3x, tRight);
             float zRight = float.Lerp(p1.Z, p3.Z, tRight);
+            Vector3 normalRight = Vector3.Lerp(vertex1.Normal, vertex3.Normal, tRight);
+            Vector3 worldRight = Vector3.Lerp(vertex1.WorldPos, vertex3.WorldPos, tRight);
 
-            ScanLineCommon(y, left, zLeft, right, zRight, color);
+            ScanLineCommon(y, left, zLeft, normalLeft, worldLeft, right, zRight, normalRight, worldRight, ambientColor, color, lightCoeffs, lightSourcePos, eye);
         }
     }
 }

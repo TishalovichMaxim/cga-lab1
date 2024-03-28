@@ -4,9 +4,9 @@ namespace Cga.Drawing;
 
 public struct Color
 {
-    public static Color Red = new Color(byte.MaxValue,  0,  0);
+    public static Color Red = new Color(byte.MaxValue, 0, 0);
     
-    public static Color Green = new Color(0, byte.MaxValue,  0);
+    public static Color Green = new Color(0, byte.MaxValue, 0);
     
     public static Color Blue = new Color(0, 0, byte.MaxValue);
     

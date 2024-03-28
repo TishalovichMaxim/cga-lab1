@@ -100,7 +100,16 @@ public partial class MainWindow : Window
         _model = _model * delta;
         _res = _viewport * _projection * _view * _model;
 
-        _mesh.Draw(_canvas, _res, Color.Blue, glm.normalize(eye - target), (target - eye), _model);
+        _mesh.Draw(
+            _canvas,
+            _res,
+            target - eye,
+            _model,
+            MeshDrawer.coeffs,
+            new Vector3(eye.x, eye.y, eye.z),
+            Color.Blue.ToVector3(),
+            new Vector3(eye.x, eye.y, eye.z)
+            );
 
         _canvas.Swap();
     }

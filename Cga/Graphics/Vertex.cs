@@ -10,6 +10,15 @@ namespace Cga.Graphics;
 public struct Vertex
 {
     public Vector3 ScreenPos;
+
     public Vector3 WorldPos;
+
     public Vector3 Normal;
+
+    public Vertex(Vector3 screenPos, Vector3 worldPos, Vector3 normal)
+    {
+        ScreenPos = screenPos;
+        WorldPos = worldPos;
+        Normal = normal;
+    }
 }

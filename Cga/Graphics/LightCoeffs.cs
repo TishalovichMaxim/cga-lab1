@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace Cga.Graphics;
 
-internal struct LightCoeffs
+public struct LightCoeffs
 {
-    float ka;
-    float kd;
-    float ks;
-    float shiny;
+    public float ka;
+    public float kd;
+    public float ks;
+    public float shiny;
 
     public LightCoeffs(float ka, float kd, float ks, float shiny)
     {
