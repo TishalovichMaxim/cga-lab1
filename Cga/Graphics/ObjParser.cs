@@ -73,32 +73,45 @@ public class ObjParser
 
     private void FHandler(string[] parts)
     {
-        int[] numArray1 = new int[3];
-        int[] numArray2 = new int[3];
-        int[] numArray3 = new int[3];
-        for (int index = 1; index < 4; ++index)
+        int nVert = parts.Length - 1;
+        int[] numArray1 = new int[nVert];
+        int[] numArray2 = new int[nVert];
+        int[] numArray3 = new int[nVert];
+
+        for (int index = 1; index < parts.Length; ++index)
         {
             string[] strArray = parts[index].Split("/", StringSplitOptions.None);
             int num1 = int.Parse(strArray[0]);
             int num2 = 0;
             int num3 = 0;
+
             if (strArray.Length == 2)
+            {
                 num2 = int.Parse(strArray[1]);
+            }
+
             else if (strArray.Length == 3)
             {
                 if (!strArray[1].Equals(""))
+                {
                     num2 = int.Parse(strArray[1]);
+                }
                 num3 = int.Parse(strArray[2]);
             }
+
             numArray1[index - 1] = num1;
             numArray3[index - 1] = num2;
             numArray2[index - 1] = num3;
         }
-        this._faces.Add(new Face()
+
+        for (int i = 0; i < numArray1.Length - 2; ++i)
         {
-            VertIndices = numArray1,
-            NormIndices = numArray2,
-            TextIndices = numArray3
-        });
+            _faces.Add(new Face()
+            {
+                VertIndices = [numArray1[0], numArray1[i + 1], numArray1[i + 2]],
+                NormIndices = [numArray2[0], numArray2[i + 1], numArray2[i + 2]],
+                TextIndices = [numArray3[0], numArray3[i + 1], numArray3[i + 2]]
+            });
+        }
     }
 }
