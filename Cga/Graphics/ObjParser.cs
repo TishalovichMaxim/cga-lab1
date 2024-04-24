@@ -1,8 +1,5 @@
-using System.Drawing;
 using System.IO;
-using System.Windows.Media;
-using Cga.Graphics;
-using GlmNet;
+using System.Numerics;
 
 namespace Cga.Graphics;
 
@@ -10,23 +7,23 @@ public class ObjParser
 {
     private readonly Dictionary<string, Action<string[]>> _handlers;
     
-    private readonly List<vec4> _vertices = new List<vec4>();
+    private readonly List<Vector4> _vertices = new List<Vector4>();
     
-    private readonly List<vec3> _normals = new List<vec3>();
+    private readonly List<Vector3> _normals = new List<Vector3>();
     
     private readonly List<Face> _faces = new List<Face>();
     
-    private readonly List<vec3> _textures = new List<vec3>();
+    private readonly List<Vector3> _textures = new List<Vector3>();
 
-    private TexturesLoader _texturesLoader = new();
+    private readonly TexturesLoader _texturesLoader = new();
 
     public ObjParser()
     {
-        this._handlers = new Dictionary<string, Action<string[]>>();
-        this._handlers["v"] = new Action<string[]>(this.VHandler);
-        this._handlers["vt"] = new Action<string[]>(this.VtHandler);
-        this._handlers["vn"] = new Action<string[]>(this.VnHandler);
-        this._handlers["f"] = new Action<string[]>(this.FHandler);
+        _handlers = new Dictionary<string, Action<string[]>>();
+        _handlers["v"] = VHandler;
+        _handlers["vt"] = VtHandler;
+        _handlers["vn"] = VnHandler;
+        _handlers["f"] = FHandler;
     }
 
     public Mesh Parse(string fileName, string normalsMapPath, string diffuseMapPath)
@@ -39,10 +36,10 @@ public class ObjParser
         }
         return new Mesh()
         {
-            Faces = this._faces,
-            Normals = this._normals,
-            Vertices = this._vertices,
-            Textures = this._textures,
+            Faces = _faces,
+            Normals = _normals,
+            Vertices = _vertices,
+            Textures = _textures,
 
             NormalsMap = _texturesLoader.LoadNormalsMap(normalsMapPath),
             DiffuseMap = _texturesLoader.LoadDiffuseMap(diffuseMapPath),
@@ -54,9 +51,9 @@ public class ObjParser
         float w = 1f;
         if (parts.Length == 5)
             w = float.Parse(parts[4]);
-        vec4 vec4 = new vec4(float.Parse(parts[1]), float.Parse(parts[2]), float.Parse(parts[3]), w);
-        vec4 /= w;
-        this._vertices.Add(vec4);
+        Vector4 vec = new Vector4(float.Parse(parts[1]), float.Parse(parts[2]), float.Parse(parts[3]), w);
+        vec /= w;
+        this._vertices.Add(vec);
     }
 
     private void VtHandler(string[] parts)
@@ -70,12 +67,12 @@ public class ObjParser
             if (parts.Length == 4)
                 z = float.Parse(parts[3]);
         }
-        this._textures.Add(new vec3(x, y, z));
+        this._textures.Add(new Vector3(x, y, z));
     }
 
     private void VnHandler(string[] parts)
     {
-        this._normals.Add(new vec3(float.Parse(parts[1]), float.Parse(parts[2]), float.Parse(parts[3])));
+        this._normals.Add(new Vector3(float.Parse(parts[1]), float.Parse(parts[2]), float.Parse(parts[3])));
     }
 
     private void FHandler(string[] parts)
@@ -87,7 +84,7 @@ public class ObjParser
 
         for (int index = 1; index < parts.Length; ++index)
         {
-            string[] strArray = parts[index].Split("/", StringSplitOptions.None);
+            string[] strArray = parts[index].Split("/");
             int num1 = int.Parse(strArray[0]);
             int num2 = 0;
             int num3 = 0;

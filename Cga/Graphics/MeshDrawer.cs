@@ -26,7 +26,7 @@ public static class MeshDrawer {
     {
         Vector3 r = light + 2 * Vector3.Dot(light, normal) * normal;
 
-        r = Vector3.Normalize(r);//i think that i can delete it.
+        r = Vector3.Normalize(r);//I think that I can delete it.
 
         return coeff * MathF.Pow(Vector3.Dot(r, view), shinyCoeff) * color;
     }
@@ -34,9 +34,9 @@ public static class MeshDrawer {
     public static void Draw(
         this Mesh mesh,
         WriteableBitmapCanvas canvas,
-        mat4 resMat,
-        vec3 view,
-        mat4 model,
+        Matrix4x4 resMat,
+        Vector3 view,
+        Matrix4x4 model,
         LightCoeffs lightCoeffs,
         Vector3 lightPos,
         Vector3 color,
@@ -44,7 +44,7 @@ public static class MeshDrawer {
     ) {
         Vector3 ambientColor = lightCoeffs.ka * color;
 
-        List<vec4> vec4List = new List<vec4>((IEnumerable<vec4>)mesh.Vertices);
+        List<vec4> vec4List = mesh.Vertices.;
         List<vec4> worldVertices = new List<vec4>();
 
         mat3 model3 = new mat3(

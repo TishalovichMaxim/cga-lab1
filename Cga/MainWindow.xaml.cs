@@ -20,26 +20,26 @@ public partial class MainWindow : Window
 
     private MatrixManager _matrixManager = new();
 
-    private mat4 _model;
+    private Matrix4x4 _model;
 
-    private mat4 _view;
+    private Matrix4x4 _view;
 
-    private mat4 _projection;
+    private Matrix4x4 _projection;
 
-    private mat4 _viewport;
+    private Matrix4x4 _viewport;
 
-    private mat4 _res;
+    private Matrix4x4 _res;
 
-    private vec3 target = new vec3(0, 0, 0);
+    private Vector3 target = new Vector3(0, 0, 0);
 
-    private vec3 eye = new vec3 (0, 2, 5);
+    private Vector3 eye = new Vector3(0, 20, 20);
     
     public MainWindow()
     {
         InitializeComponent();
 
         _mesh = _objParser.Parse(
-            "Models/ShovelKnight/shovel_normal_map.png",
+            "Models/ShovelKnight/shovel_low.obj",
             "Models/ShovelKnight/shovel_normal_map.png",
             "Models/ShovelKnight/shovel_diffuse.png"
             );
@@ -98,7 +98,7 @@ public partial class MainWindow : Window
     {
         _canvas.Clear(Color.Red);
 
-        mat4 delta = _matrixManager
+        Matrix4x4 delta = _matrixManager
             .GetRotateY(1.0f);
 
         _model = _model * delta;
