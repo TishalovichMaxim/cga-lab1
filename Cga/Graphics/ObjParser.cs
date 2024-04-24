@@ -1,4 +1,6 @@
+using System.Drawing;
 using System.IO;
+using System.Windows.Media;
 using Cga.Graphics;
 using GlmNet;
 
@@ -16,6 +18,8 @@ public class ObjParser
     
     private readonly List<vec3> _textures = new List<vec3>();
 
+    private TexturesLoader _texturesLoader = new();
+
     public ObjParser()
     {
         this._handlers = new Dictionary<string, Action<string[]>>();
@@ -25,7 +29,7 @@ public class ObjParser
         this._handlers["f"] = new Action<string[]>(this.FHandler);
     }
 
-    public Mesh Parse(string fileName)
+    public Mesh Parse(string fileName, string normalsMapPath, string diffuseMapPath)
     {
         foreach (string readAllLine in File.ReadAllLines(fileName))
         {
@@ -38,7 +42,10 @@ public class ObjParser
             Faces = this._faces,
             Normals = this._normals,
             Vertices = this._vertices,
-            Textures = this._textures
+            Textures = this._textures,
+
+            NormalsMap = _texturesLoader.LoadNormalsMap(normalsMapPath),
+            DiffuseMap = _texturesLoader.LoadDiffuseMap(diffuseMapPath),
         };
     }
 
