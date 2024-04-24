@@ -38,7 +38,11 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        _mesh = _objParser.Parse("./Models/head.obj");
+        _mesh = _objParser.Parse(
+            "Models/ShovelKnight/shovel_normal_map.png",
+            "Models/ShovelKnight/shovel_normal_map.png",
+            "Models/ShovelKnight/shovel_diffuse.png"
+            );
         
         Loaded += MainWindow_Loaded;
     }
