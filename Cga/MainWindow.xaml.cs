@@ -30,15 +30,21 @@ public partial class MainWindow : Window
 
     private mat4 _res;
 
-    private vec3 target = new vec3(0, 0, 0);
+    private vec3 target = new vec3(0, 0, -1);
 
-    private vec3 eye = new vec3 (0, 2, 5);
+    private vec3 eye = new vec3 (0, 20, 20);
     
     public MainWindow()
     {
         InitializeComponent();
 
-        _mesh = _objParser.Parse("./Models/head.obj");
+        string path = "Models/ShovelKnight/";
+        
+        _mesh = _objParser.Parse(
+            path + "shovel_low.obj",
+            path + "shovel_normal_map.png",
+            path + "shovel_diffuse.png"
+            );
         
         Loaded += MainWindow_Loaded;
     }

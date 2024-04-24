@@ -4,9 +4,11 @@ using GlmNet;
 
 namespace Cga.Graphics;
 
-public static class MeshDrawer {
+public static class MeshDrawer
+{
+    private static readonly float delta = 0.00001f;
 
-    public static readonly LightCoeffs coeffs = new LightCoeffs(0.15f, 0.4f, 0.2f, 4.0f);
+    public static readonly LightCoeffs coeffs = new LightCoeffs(0.15f, 0.4f, 0.3f, 8.0f);
 
     private static Vector3 GetAmbitentColor(float coeff, Vector3 color)
     {
@@ -29,6 +31,15 @@ public static class MeshDrawer {
         r = Vector3.Normalize(r);//i think that i can delete it.
 
         return coeff * MathF.Pow(Vector3.Dot(r, view), shinyCoeff) * color;
+    }
+
+    //normals map is rotated
+    private static Vector3 GetNormal(Vector3[,] normalsMap, float u, float v)
+    {
+        int x = (int)(u * normalsMap.GetLength(0));
+        int y = (int)(v * normalsMap.Rank);
+
+        return normalsMap[y, x];
     }
 
     public static void Draw(
@@ -94,27 +105,27 @@ public static class MeshDrawer {
             Vertex vert1 = new Vertex(
                 new Vector3(vertex1.x, vertex1.y, vertex1.z),
                 new Vector3(world1.x, world1.y, world1.z),
-                new Vector3(normal1.x, normal1.y, normal1.z)
+                new Vector3(mesh.Textures[face.TextIndices[0] - 1][0], mesh.Textures[face.TextIndices[0] - 1][1], 0.0f)
                 );
 
             Vertex vert2 = new Vertex(
                 new Vector3(vertex2.x, vertex2.y, vertex2.z),
                 new Vector3(world2.x, world2.y, world2.z),
-                new Vector3(normal2.x, normal2.y, normal2.z)
+                new Vector3(mesh.Textures[face.TextIndices[1] - 1][0], mesh.Textures[face.TextIndices[1] - 1][1], 0.0f)
                 );
 
             Vertex vert3 = new Vertex(
                 new Vector3(vertex3.x, vertex3.y, vertex3.z),
                 new Vector3(world3.x, world3.y, world3.z),
-                new Vector3(normal3.x, normal3.y, normal3.z)
+                new Vector3(mesh.Textures[face.TextIndices[2] - 1][0], mesh.Textures[face.TextIndices[2] - 1][1], 0.0f)
                 );
 
             canvas.ScanLine(
+                mesh,
                 vert1,
                 vert2,
                 vert3,
                 ambientColor,
-                color,
                 lightCoeffs,
                 lightPos,
                 eye
