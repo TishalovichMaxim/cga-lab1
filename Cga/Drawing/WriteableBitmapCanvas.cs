@@ -168,7 +168,9 @@ public class WriteableBitmapCanvas
         LightCoeffs lightCoeffs,
         vec4 lightPos,
         vec4 eye,
-        mat4 model
+        mat4 model,
+        float wLeft,
+        float wRight
         )
     {
         if (left > right)
@@ -177,6 +179,7 @@ public class WriteableBitmapCanvas
             (zLeft, zRight) = (zRight, zLeft);
             (worldLeft, worldRight) = (worldRight, worldLeft);
             (textureCoordsLeft, textureCoordsRight) = (textureCoordsRight, textureCoordsLeft);
+            (wLeft, wRight) = (wRight, wLeft);
         }
 
         for (int x = left; x < right; x++)
@@ -184,7 +187,13 @@ public class WriteableBitmapCanvas
             float t = ((float)(x - left)) / (right - left);
 
             float z = float.Lerp(zLeft, zRight, t);
-            vec3 textureCoords = Vec.Lerp(textureCoordsLeft, textureCoordsRight, t);
+            vec3 textureCoords = LerpTextureCoords(
+                textureCoordsLeft,
+                wLeft,
+                textureCoordsRight,
+                wRight,
+                t
+            );
 
             vec3 normal = new vec3(model * new vec4(GetNormal(textureCoords, mesh.NormalsMap), 1.0f));
             vec3 color = GetColor(textureCoords, mesh.DiffuseMap);
@@ -259,14 +268,47 @@ public class WriteableBitmapCanvas
             int left = (int)float.Lerp(p1x, p2x, tLeft);
             float zLeft = float.Lerp(p1.z, p2.z, tLeft);
             vec4 worldLeft = Vec.Lerp(vertex1.WorldPos, vertex2.WorldPos, tLeft);
-            vec3 textureCoordsLeft = Vec.Lerp(vertex1.TextureCoords, vertex2.TextureCoords, tLeft);
+            vec3 textureCoordsLeft = LerpTextureCoords(
+                vertex1.TextureCoords,
+                vertex1.ScreenPos.w,
+                vertex2.TextureCoords,
+                vertex2.ScreenPos.w,
+                tLeft
+            );
 
             int right = (int)float.Lerp(p1x, p3x, tRight);
             float zRight = float.Lerp(p1.z, p3.z, tRight);
             vec4 worldRight = Vec.Lerp(vertex1.WorldPos, vertex3.WorldPos, tRight);
-            vec3 textureCoordsRight = Vec.Lerp(vertex1.TextureCoords, vertex3.TextureCoords, tRight);
+            vec3 textureCoordsRight = LerpTextureCoords(
+                vertex1.TextureCoords,
+                vertex1.ScreenPos.w,
+                vertex3.TextureCoords,
+                vertex3.ScreenPos.w,
+                tRight
+            );
 
-            ScanLineCommon(mesh, y, left, zLeft, textureCoordsLeft, worldLeft, right, zRight, textureCoordsRight, worldRight, ambientColor, lightCoeffs, lightSourcePos, eye, model);
+            float wLeft = float.Lerp(vertex1.ScreenPos.w, vertex2.ScreenPos.w, tLeft);
+            float wRight = float.Lerp(vertex1.ScreenPos.w, vertex3.ScreenPos.w, tRight);
+            
+            ScanLineCommon(
+                mesh,
+                y,
+                left,
+                zLeft,
+                textureCoordsLeft,
+                worldLeft,
+                right,
+                zRight,
+                textureCoordsRight,
+                worldRight,
+                ambientColor,
+                lightCoeffs,
+                lightSourcePos,
+                eye,
+                model,
+                wLeft,
+                wRight
+            );
         }
 
         for (int y = p2y; y < p3y; y++)
@@ -277,14 +319,47 @@ public class WriteableBitmapCanvas
             int left = (int)float.Lerp(p2x, p3x, tLeft);
             float zLeft = float.Lerp(p2.z, p3.z, tLeft);
             vec4 worldLeft = Vec.Lerp(vertex2.WorldPos, vertex3.WorldPos, tLeft);
-            vec3 textureCoordsLeft = Vec.Lerp(vertex2.TextureCoords, vertex3.TextureCoords, tLeft);
+            vec3 textureCoordsLeft = LerpTextureCoords(
+                vertex2.TextureCoords,
+                vertex2.ScreenPos.w,
+                vertex3.TextureCoords,
+                vertex3.ScreenPos.w,
+                tLeft
+            );
 
             int right = (int)float.Lerp(p1x, p3x, tRight);
             float zRight = float.Lerp(p1.z, p3.z, tRight);
             vec4 worldRight = Vec.Lerp(vertex1.WorldPos, vertex3.WorldPos, tRight);
-            vec3 textureCoordsRight = Vec.Lerp(vertex1.TextureCoords, vertex3.TextureCoords, tRight);
+            vec3 textureCoordsRight = LerpTextureCoords(
+                vertex1.TextureCoords,
+                vertex1.ScreenPos.w,
+                vertex3.TextureCoords,
+                vertex3.ScreenPos.w,
+                tRight
+            );
 
-            ScanLineCommon(mesh, y, left, zLeft, textureCoordsLeft, worldLeft, right, zRight, textureCoordsRight, worldRight, ambientColor, lightCoeffs, lightSourcePos, eye, model);
+            float wLeft = float.Lerp(vertex2.ScreenPos.w, vertex3.ScreenPos.w, tLeft);
+            float wRight = float.Lerp(vertex1.ScreenPos.w, vertex3.ScreenPos.w, tRight);
+            
+            ScanLineCommon(
+                mesh,
+                y,
+                left,
+                zLeft,
+                textureCoordsLeft,
+                worldLeft,
+                right,
+                zRight,
+                textureCoordsRight,
+                worldRight,
+                ambientColor,
+                lightCoeffs,
+                lightSourcePos,
+                eye,
+                model,
+                wLeft,
+                wRight
+            );
         }
     }
 }
