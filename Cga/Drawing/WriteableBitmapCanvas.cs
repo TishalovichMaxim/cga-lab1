@@ -135,22 +135,22 @@ public class WriteableBitmapCanvas
         pixelsData[offset + 3] = color.A;
     }
 
-    public Vector3 GetNormal(Vector3 textureCoords, Vector3[,] normalsMap)
+    public vec3 GetNormal(vec3 textureCoords, vec3[,] normalsMap)
     {
-        int x = (int)MathF.Abs((normalsMap.GetLength(0) * textureCoords.Y - Delta));
-        int y = (int)MathF.Abs((normalsMap.GetLength(1) * textureCoords.X - Delta));
+        int x = (int)MathF.Abs((normalsMap.GetLength(0) * textureCoords.y - Delta));
+        int y = (int)MathF.Abs((normalsMap.GetLength(1) * textureCoords.x - Delta));
 
         return normalsMap[x, y];
     }
     
-    public Vector3 GetColor(Vector3 textureCoords, System.Drawing.Color[,] diffuseMap)
+    public vec3 GetColor(vec3 textureCoords, System.Drawing.Color[,] diffuseMap)
     {
-        int x = (int)MathF.Abs((diffuseMap.GetLength(0) * textureCoords.Y - Delta));
-        int y = (int)MathF.Abs((diffuseMap.GetLength(1) * textureCoords.X - Delta));
+        int x = (int)MathF.Abs((diffuseMap.GetLength(0) * textureCoords.y - Delta));
+        int y = (int)MathF.Abs((diffuseMap.GetLength(1) * textureCoords.x - Delta));
 
         System.Drawing.Color res = diffuseMap[x, y];
 
-        return new Vector3(res.R, res.G, res.B);
+        return new vec3(res.R, res.G, res.B);
     }
         
     private void ScanLineCommon(
@@ -158,16 +158,17 @@ public class WriteableBitmapCanvas
         int y,
         int left,
         float zLeft,
-        Vector3 textureCoordsLeft,
-        Vector3 worldLeft,
+        vec3 textureCoordsLeft,
+        vec4 worldLeft,
         int right,
         float zRight,
-        Vector3 textureCoordsRight,
-        Vector3 worldRight,
-        Vector3 ambientColor,
+        vec3 textureCoordsRight,
+        vec4 worldRight,
+        vec3 ambientColor,
         LightCoeffs lightCoeffs,
-        Vector3 lightPos,
-        Vector3 eye
+        vec4 lightPos,
+        vec4 eye,
+        mat4 model
         )
     {
         if (left > right)
@@ -183,65 +184,72 @@ public class WriteableBitmapCanvas
             float t = ((float)(x - left)) / (right - left);
 
             float z = float.Lerp(zLeft, zRight, t);
-            Vector3 textureCoords = Vector3.Lerp(textureCoordsLeft, textureCoordsRight, t);
+            vec3 textureCoords = Vec.Lerp(textureCoordsLeft, textureCoordsRight, t);
 
-            Vector3 normal = GetNormal(textureCoords, mesh.NormalsMap);
-            Vector3 color = GetColor(textureCoords, mesh.DiffuseMap);
+            vec3 normal = new vec3(model * new vec4(GetNormal(textureCoords, mesh.NormalsMap), 1.0f));
+            vec3 color = GetColor(textureCoords, mesh.DiffuseMap);
             
-            Vector3 world = Vector3.Lerp(worldLeft, worldRight, t);
+            vec4 world = Vec.Lerp(worldLeft, worldRight, t);
 
-            Vector3 light = -Vector3.Normalize(world - lightPos);
-            Vector3 diffuseColor = lightCoeffs.kd * MathF.Max(0.0f, Vector3.Dot(normal, light)) * color;
+            vec3 light = new vec3(glm.normalize(lightPos - world));
+            vec3 diffuseColor = lightCoeffs.kd * MathF.Max(0.0f, glm.dot(normal, light)) * color;
 
-            Vector3 reflected = light - 2 * Vector3.Dot(light, normal) * normal;
-            Vector3 view = -Vector3.Normalize(world - eye);
+            vec3 reflected = light - 2 * glm.dot(light, normal) * normal;
+            vec3 view = new vec3(glm.normalize(eye - world));
 
-            Vector3 specularColor = lightCoeffs.ks * MathF.Pow(Vector3.Dot(reflected, view), lightCoeffs.shiny) * color;
+            vec3 specularColor = lightCoeffs.ks * MathF.Pow(glm.dot(reflected, view), lightCoeffs.shiny) * color;
 
-            Vector3 resColor = color; //diffuseColor; //ambientColor + diffuseColoe + specularColor;
+            //vec3 resColor = diffuseColor + specularColor; //diffuseColor; //ambientColor + diffuseColor + specularColor;
+            vec3 resColor = color; //diffuseColor; //ambientColor + diffuseColor + specularColor;
             
             DrawPixel(new Color(resColor), _pixelsData, Width, (x, y, z));
         }
     }
 
+    public vec3 LerpTextureCoords(vec3 from, float zFrom, vec3 to, float zTo, float t)
+    {
+        return ((1 - t) * from / zFrom + t * to / zTo) / ((1 - t)*(1/zFrom) + t/zTo);
+    }
+    
     public void ScanLine(
         Mesh mesh,
         Vertex vertex1,
         Vertex vertex2,
         Vertex vertex3,
-        Vector3 ambientColor,
+        vec3 ambientColor,
         LightCoeffs lightCoeffs,
-        Vector3 lightSourcePos,
-        Vector3 eye
+        vec4 lightSourcePos,
+        vec4 eye,
+        mat4 model
         )
     {
-        if (vertex1.ScreenPos.Y > vertex2.ScreenPos.Y)
+        if (vertex1.ScreenPos.y > vertex2.ScreenPos.y)
         {
             (vertex1, vertex2) = (vertex2, vertex1);
         }
 
-        if (vertex1.ScreenPos.Y > vertex3.ScreenPos.Y)
+        if (vertex1.ScreenPos.y > vertex3.ScreenPos.y)
         {
             (vertex1, vertex3) = (vertex3, vertex1);
         }
 
-        if (vertex2.ScreenPos.Y > vertex3.ScreenPos.Y)
+        if (vertex2.ScreenPos.y > vertex3.ScreenPos.y)
         {
             (vertex2, vertex3) = (vertex3, vertex2);
         }
 
-        Vector3 p1 = vertex1.ScreenPos;
-        Vector3 p2 = vertex2.ScreenPos;
-        Vector3 p3 = vertex3.ScreenPos;
+        vec4 p1 = vertex1.ScreenPos;
+        vec4 p2 = vertex2.ScreenPos;
+        vec4 p3 = vertex3.ScreenPos;
 
-        int p1x = (int)p1.X;
-        int p1y = (int)p1.Y;
+        int p1x = (int)p1.x;
+        int p1y = (int)p1.y;
 
-        int p2x = (int)p2.X;
-        int p2y = (int)p2.Y;
+        int p2x = (int)p2.x;
+        int p2y = (int)p2.y;
 
-        int p3x = (int)p3.X;
-        int p3y = (int)p3.Y;
+        int p3x = (int)p3.x;
+        int p3y = (int)p3.y;
 
         for (int y = p1y; y < p2y; y++)
         {
@@ -249,16 +257,16 @@ public class WriteableBitmapCanvas
             float tRight = ((float)(y - p1y)) / (p3y - p1y);
 
             int left = (int)float.Lerp(p1x, p2x, tLeft);
-            float zLeft = float.Lerp(p1.Z, p2.Z, tLeft);
-            Vector3 worldLeft = Vector3.Lerp(vertex1.WorldPos, vertex2.WorldPos, tLeft);
-            Vector3 textureCoordsLeft = Vector3.Lerp(vertex1.TextureCoords, vertex2.TextureCoords, tLeft);
+            float zLeft = float.Lerp(p1.z, p2.z, tLeft);
+            vec4 worldLeft = Vec.Lerp(vertex1.WorldPos, vertex2.WorldPos, tLeft);
+            vec3 textureCoordsLeft = Vec.Lerp(vertex1.TextureCoords, vertex2.TextureCoords, tLeft);
 
             int right = (int)float.Lerp(p1x, p3x, tRight);
-            float zRight = float.Lerp(p1.Z, p3.Z, tRight);
-            Vector3 worldRight = Vector3.Lerp(vertex1.WorldPos, vertex3.WorldPos, tRight);
-            Vector3 textureCoordsRight = Vector3.Lerp(vertex1.TextureCoords, vertex3.TextureCoords, tRight);
+            float zRight = float.Lerp(p1.z, p3.z, tRight);
+            vec4 worldRight = Vec.Lerp(vertex1.WorldPos, vertex3.WorldPos, tRight);
+            vec3 textureCoordsRight = Vec.Lerp(vertex1.TextureCoords, vertex3.TextureCoords, tRight);
 
-            ScanLineCommon(mesh, y, left, zLeft, textureCoordsLeft, worldLeft, right, zRight, textureCoordsRight, worldRight, ambientColor, lightCoeffs, lightSourcePos, eye);
+            ScanLineCommon(mesh, y, left, zLeft, textureCoordsLeft, worldLeft, right, zRight, textureCoordsRight, worldRight, ambientColor, lightCoeffs, lightSourcePos, eye, model);
         }
 
         for (int y = p2y; y < p3y; y++)
@@ -267,16 +275,16 @@ public class WriteableBitmapCanvas
             float tRight = ((float)(y - p1y)) / (p3y - p1y);
 
             int left = (int)float.Lerp(p2x, p3x, tLeft);
-            float zLeft = float.Lerp(p2.Z, p3.Z, tLeft);
-            Vector3 worldLeft = Vector3.Lerp(vertex2.WorldPos, vertex3.WorldPos, tLeft);
-            Vector3 textureCoordsLeft = Vector3.Lerp(vertex2.TextureCoords, vertex3.TextureCoords, tLeft);
+            float zLeft = float.Lerp(p2.z, p3.z, tLeft);
+            vec4 worldLeft = Vec.Lerp(vertex2.WorldPos, vertex3.WorldPos, tLeft);
+            vec3 textureCoordsLeft = Vec.Lerp(vertex2.TextureCoords, vertex3.TextureCoords, tLeft);
 
             int right = (int)float.Lerp(p1x, p3x, tRight);
-            float zRight = float.Lerp(p1.Z, p3.Z, tRight);
-            Vector3 worldRight = Vector3.Lerp(vertex1.WorldPos, vertex3.WorldPos, tRight);
-            Vector3 textureCoordsRight = Vector3.Lerp(vertex1.TextureCoords, vertex3.TextureCoords, tRight);
+            float zRight = float.Lerp(p1.z, p3.z, tRight);
+            vec4 worldRight = Vec.Lerp(vertex1.WorldPos, vertex3.WorldPos, tRight);
+            vec3 textureCoordsRight = Vec.Lerp(vertex1.TextureCoords, vertex3.TextureCoords, tRight);
 
-            ScanLineCommon(mesh, y, left, zLeft, textureCoordsLeft, worldLeft, right, zRight, textureCoordsRight, worldRight, ambientColor, lightCoeffs, lightSourcePos, eye);
+            ScanLineCommon(mesh, y, left, zLeft, textureCoordsLeft, worldLeft, right, zRight, textureCoordsRight, worldRight, ambientColor, lightCoeffs, lightSourcePos, eye, model);
         }
     }
 }

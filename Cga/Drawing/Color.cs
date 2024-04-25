@@ -1,4 +1,5 @@
 using System.Numerics;
+using GlmNet;
 
 namespace Cga.Drawing;
 
@@ -34,6 +35,14 @@ public struct Color
         this.A = 255;
     }
 
+    public Color(vec3 color)
+    {
+        this.R = (byte)color.x;
+        this.G = (byte)color.y;
+        this.B = (byte)color.z;
+        this.A = 255;
+    }
+    
     public Vector3 ToVector3()
     {
         return new Vector3(R, G, B);

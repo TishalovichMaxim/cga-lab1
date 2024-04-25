@@ -30,20 +30,20 @@ public partial class MainWindow : Window
 
     private mat4 _res;
 
-    private vec3 target = new vec3(0, 0, -1);
+    private vec4 target = new vec4(0, 0, 0, 1);
 
-    private vec3 eye = new vec3 (0, 20, 20);
+    private vec4 eye = new vec4 (0, 0, 7, 1);
     
     public MainWindow()
     {
         InitializeComponent();
 
-        string path = "Models/ShovelKnight/";
+        string path = "Models/Cube/";
         
         _mesh = _objParser.Parse(
-            path + "shovel_low.obj",
-            path + "shovel_normal_map.png",
-            path + "shovel_diffuse.png"
+            path + "cube.obj",
+            path + "normals.jpg",
+            path + "chessboard.png"
             );
         
         Loaded += MainWindow_Loaded;
@@ -70,8 +70,8 @@ public partial class MainWindow : Window
         
         _view = _matrixManager.GetViewMatrix(
             new vec3(0, 1, 0),
-            eye,
-            target
+            new vec3(eye),
+            new vec3(target)
         );
         
         _projection = _matrixManager.GetProjectionMatrix(
@@ -101,20 +101,20 @@ public partial class MainWindow : Window
         _canvas.Clear(Color.Red);
 
         mat4 delta = _matrixManager
-            .GetRotateY(1.0f);
+            .GetRotateX(45.0f);
 
-        _model = _model * delta;
+        _model = delta;
         _res = _viewport * _projection * _view * _model;
 
         _mesh.Draw(
             _canvas,
             _res,
-            target - eye,
+            new vec3(target - eye),
             _model,
             MeshDrawer.coeffs,
-            new Vector3(eye.x, eye.y, eye.z),
-            Color.Blue.ToVector3(),
-            new Vector3(eye.x, eye.y, eye.z)
+            eye,
+            new vec3(Color.Blue.R, Color.Blue.R, Color.Blue.R),
+            eye
             );
 
         _canvas.Swap();

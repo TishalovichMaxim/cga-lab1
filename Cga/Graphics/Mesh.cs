@@ -14,7 +14,7 @@ public struct Mesh
     
     public List<vec3> Textures;
 
-    public Vector3[,] NormalsMap;
+    public vec3[,] NormalsMap;
 
     public Color[,] DiffuseMap;
 }
