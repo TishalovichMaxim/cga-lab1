@@ -133,21 +133,22 @@ public class WriteableBitmapCanvas
         pixelsData[offset + 2] = color.R;
         pixelsData[offset + 3] = color.A;
     }
-
-    public vec3 GetNormal(vec3 textureCoords, vec3[,] normalsMap)
-    {
-        int x = (int)MathF.Abs((normalsMap.GetLength(0) * textureCoords.y - Delta));
-        int y = (int)MathF.Abs((normalsMap.GetLength(1) * textureCoords.x - Delta));
-
-        return normalsMap[x, y];
-    }
     
-    public vec3 GetColor(vec3 textureCoords, vec3[,] diffuseMap)
+    public vec3 GetTextureValue(vec3 textureCoords, vec3[,] diffuseMap)
     {
-        int x = (int)MathF.Abs((diffuseMap.GetLength(0) * textureCoords.y - Delta));
-        int y = (int)MathF.Abs((diffuseMap.GetLength(1) * textureCoords.x - Delta));
+        float floatRow = (diffuseMap.GetLength(0) - 1) * textureCoords.y;
+        float floatCol = (diffuseMap.GetLength(1) - 1) * textureCoords.x;
 
-        return diffuseMap[x, y];
+        int row = (int)floatRow;
+        int col = (int)floatCol;
+
+        int nextRow = Math.Min((diffuseMap.GetLength(0) - 1), row + 1);
+        int nextCol = Math.Min((diffuseMap.GetLength(1) - 1), col + 1);
+
+        vec3 top = Vec.Lerp(diffuseMap[nextRow, col], diffuseMap[nextRow, nextCol], floatCol - col);
+        vec3 bottom = Vec.Lerp(diffuseMap[row, col], diffuseMap[row, nextCol], floatCol - col);
+
+        return Vec.Lerp(bottom, top, floatRow - row);
     }
         
     private void ScanLineCommon(
@@ -194,11 +195,11 @@ public class WriteableBitmapCanvas
                 t
             );
 
-            vec3 normal = glm.normalize(new vec3(model * new vec4(GetNormal(textureCoords, mesh.NormalsMap), 1.0f)));
+            vec3 normal = glm.normalize(new vec3(model * new vec4(GetTextureValue(textureCoords, mesh.NormalsMap), 1.0f)));
             
-            vec3 kd = GetColor(textureCoords, mesh.DiffuseMap);
+            vec3 kd = GetTextureValue(textureCoords, mesh.DiffuseMap);
             
-            vec3 ks = GetColor(textureCoords, mesh.SpecularMap);
+            vec3 ks = GetTextureValue(textureCoords, mesh.SpecularMap);
             
             vec4 world = Vec.Lerp(worldLeft, worldRight, t);
 
