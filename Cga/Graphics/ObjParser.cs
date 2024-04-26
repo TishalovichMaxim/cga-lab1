@@ -29,7 +29,7 @@ public class ObjParser
         this._handlers["f"] = new Action<string[]>(this.FHandler);
     }
 
-    public Mesh Parse(string fileName, string normalsMapPath, string diffuseMapPath)
+    public Mesh Parse(string fileName, string normalsMapPath, string diffuseMapPath, string specularMapPath)
     {
         foreach (string readAllLine in File.ReadAllLines(fileName))
         {
@@ -45,7 +45,8 @@ public class ObjParser
             Textures = this._textures,
 
             NormalsMap = _texturesLoader.LoadNormalsMap(normalsMapPath),
-            DiffuseMap = _texturesLoader.LoadDiffuseMap(diffuseMapPath),
+            DiffuseMap = _texturesLoader.LoadMap(diffuseMapPath),
+            SpecularMap = _texturesLoader.LoadMap(specularMapPath),
         };
     }
 

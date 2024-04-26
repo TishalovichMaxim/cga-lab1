@@ -8,7 +8,7 @@ public static class MeshDrawer
 {
     private static readonly float delta = 0.00001f;
 
-    public static readonly LightCoeffs coeffs = new LightCoeffs(0.15f, 0.4f, 0.3f, 8.0f);
+    public static readonly LightCoeffs coeffs = new LightCoeffs(0.15f, 0.4f, 0.3f, 32.0f);
 
     public static void Draw(
         this Mesh mesh,

@@ -32,19 +32,39 @@ public partial class MainWindow : Window
 
     private vec4 target = new vec4(0, 0, 0, 1);
 
-    private vec4 eye = new vec4 (0, 0, 7, 1);
+    private vec4 eye;
     
     public MainWindow()
     {
         InitializeComponent();
 
-        string path = "Models/Cube/";
+        //=======
+        
+        string path = "Models/Head/";
         
         _mesh = _objParser.Parse(
-            path + "cube.obj",
-            path + "normals.jpg",
-            path + "chessboard.png"
+            path + "head.obj",
+            path + "normal.jpg",
+            path + "diffuse.jpg",
+            path + "specular.png"
             );
+        
+        eye = new vec4 (0, 2, 4, 1);
+        
+        //======== 
+        
+        //string path = "Models/Cube/";
+        //
+        //_mesh = _objParser.Parse(
+        //    path + "cube.obj",
+        //    path + "normal.jpg",
+        //    path + "diffuse.png",
+        //    path + "specular.jpg"
+        //    );
+        //
+        //eye = new vec4 (0, 0, 4, 1);
+        
+        //=========
         
         Loaded += MainWindow_Loaded;
     }
@@ -100,10 +120,19 @@ public partial class MainWindow : Window
     {
         _canvas.Clear(Color.Red);
 
+        //============
+        
         mat4 delta = _matrixManager
-            .GetRotateX(45.0f);
+            .GetRotateY(1.0f);
 
-        _model = delta;
+        _model = _model*delta;
+        
+        //============
+        
+        //_model = _matrixManager.GetRotateX(45.0f);
+        
+        //============
+        
         _res = _viewport * _projection * _view * _model;
 
         _mesh.Draw(

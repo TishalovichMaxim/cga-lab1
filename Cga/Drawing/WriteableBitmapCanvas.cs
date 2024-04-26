@@ -1,4 +1,3 @@
-using System.Numerics;
 using System.Windows;
 using System.Windows.Media.Imaging;
 using Cga.Graphics;
@@ -143,14 +142,12 @@ public class WriteableBitmapCanvas
         return normalsMap[x, y];
     }
     
-    public vec3 GetColor(vec3 textureCoords, System.Drawing.Color[,] diffuseMap)
+    public vec3 GetColor(vec3 textureCoords, vec3[,] diffuseMap)
     {
         int x = (int)MathF.Abs((diffuseMap.GetLength(0) * textureCoords.y - Delta));
         int y = (int)MathF.Abs((diffuseMap.GetLength(1) * textureCoords.x - Delta));
 
-        System.Drawing.Color res = diffuseMap[x, y];
-
-        return new vec3(res.R, res.G, res.B);
+        return diffuseMap[x, y];
     }
         
     private void ScanLineCommon(
@@ -173,6 +170,8 @@ public class WriteableBitmapCanvas
         float wRight
         )
     {
+        vec3 lightColor = new vec3(230, 230, 230);
+        
         if (left > right)
         {
             (left, right) = (right, left);
@@ -195,21 +194,25 @@ public class WriteableBitmapCanvas
                 t
             );
 
-            vec3 normal = new vec3(model * new vec4(GetNormal(textureCoords, mesh.NormalsMap), 1.0f));
-            vec3 color = GetColor(textureCoords, mesh.DiffuseMap);
+            vec3 normal = glm.normalize(new vec3(model * new vec4(GetNormal(textureCoords, mesh.NormalsMap), 1.0f)));
+            
+            vec3 kd = GetColor(textureCoords, mesh.DiffuseMap);
+            
+            vec3 ks = GetColor(textureCoords, mesh.SpecularMap);
             
             vec4 world = Vec.Lerp(worldLeft, worldRight, t);
 
             vec3 light = new vec3(glm.normalize(lightPos - world));
-            vec3 diffuseColor = lightCoeffs.kd * MathF.Max(0.0f, glm.dot(normal, light)) * color;
+            vec3 diffuseColor = kd * MathF.Max(0.0f, glm.dot(normal, light)) * lightColor;
 
             vec3 reflected = light - 2 * glm.dot(light, normal) * normal;
             vec3 view = new vec3(glm.normalize(eye - world));
 
-            vec3 specularColor = lightCoeffs.ks * MathF.Pow(glm.dot(reflected, view), lightCoeffs.shiny) * color;
+            vec3 specularColor = ks * MathF.Pow(glm.dot(reflected, view), lightCoeffs.shiny) * lightColor;
 
-            //vec3 resColor = diffuseColor + specularColor; //diffuseColor; //ambientColor + diffuseColor + specularColor;
-            vec3 resColor = color; //diffuseColor; //ambientColor + diffuseColor + specularColor;
+            //vec3 resColor = diffuseColor;
+            //vec3 resColor = specularColor;
+            vec3 resColor = diffuseColor + specularColor;
             
             DrawPixel(new Color(resColor), _pixelsData, Width, (x, y, z));
         }

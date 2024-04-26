@@ -1,22 +1,22 @@
 ﻿using System.Drawing;
-using System.Numerics;
 using GlmNet;
 
 namespace Cga.Graphics;
 
 public class TexturesLoader
 {
-    public Color[,] LoadDiffuseMap(string path)
+    public vec3[,] LoadMap(string path)
     {
         using Bitmap bitmap = new Bitmap(path);
 
-        Color[,] data = new Color[bitmap.Height, bitmap.Width];
+        vec3[,] data = new vec3[bitmap.Height, bitmap.Width];
 
         for (int i = 0; i < bitmap.Height; i++)
         {
             for (int j = 0; j < bitmap.Width; j++)
             {
-                data[bitmap.Height - 1 - i, j] = bitmap.GetPixel(j, i);
+                Color pixel = bitmap.GetPixel(j, i);
+                data[bitmap.Height - 1 - i, j] = (new vec3(pixel.R, pixel.G, pixel.B))/255.0f;
             }
         }
 

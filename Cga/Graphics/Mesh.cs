@@ -1,5 +1,3 @@
-using System.Drawing;
-using System.Numerics;
 using GlmNet;
 
 namespace Cga.Graphics;
@@ -16,5 +14,7 @@ public struct Mesh
 
     public vec3[,] NormalsMap;
 
-    public Color[,] DiffuseMap;
+    public vec3[,] DiffuseMap;
+
+    public vec3[,] SpecularMap;
 }
