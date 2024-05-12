@@ -1,10 +1,48 @@
-using System.Drawing;
 using System.IO;
-using System.Windows.Media;
-using Cga.Graphics;
+using Cga.LinearAlgebra;
 using GlmNet;
 
 namespace Cga.Graphics;
+
+struct VertexInfo
+{
+    int VertIndex;
+    int TextureIndex;
+
+    public VertexInfo(int vertIndex, int textureIndex)
+    {
+        VertIndex = vertIndex;
+        TextureIndex = textureIndex;
+    }
+}
+
+struct TangentInfo
+{
+    private mat3 _tbnMatrix;
+
+    private int _count = 1;
+
+    public TangentInfo(mat3 tbnMatrix)
+    {
+        _tbnMatrix = tbnMatrix;
+    }
+
+    public void Add(mat3 tbnMatrix)
+    {
+        _tbnMatrix.add(tbnMatrix);
+
+        _count++;
+    }
+
+    public mat3 Res()
+    {
+        mat3 mat = _tbnMatrix;
+
+        mat.div(_count);
+
+        return mat;
+    }
+}
 
 public class ObjParser
 {
@@ -22,11 +60,11 @@ public class ObjParser
 
     public ObjParser()
     {
-        this._handlers = new Dictionary<string, Action<string[]>>();
-        this._handlers["v"] = new Action<string[]>(this.VHandler);
-        this._handlers["vt"] = new Action<string[]>(this.VtHandler);
-        this._handlers["vn"] = new Action<string[]>(this.VnHandler);
-        this._handlers["f"] = new Action<string[]>(this.FHandler);
+        _handlers = new Dictionary<string, Action<string[]>>();
+        _handlers["v"] = new Action<string[]>(this.VHandler);
+        _handlers["vt"] = new Action<string[]>(this.VtHandler);
+        _handlers["vn"] = new Action<string[]>(this.VnHandler);
+        _handlers["f"] = new Action<string[]>(this.FHandler);
     }
 
     public Mesh Parse(string fileName, string normalsMapPath, string diffuseMapPath, string specularMapPath)
@@ -37,7 +75,8 @@ public class ObjParser
             if (strArray.Length != 0 && this._handlers.ContainsKey(strArray[0]))
                 this._handlers[strArray[0]](strArray);
         }
-        return new Mesh()
+        
+        Mesh mesh = new Mesh()
         {
             Faces = this._faces,
             Normals = this._normals,
@@ -48,6 +87,66 @@ public class ObjParser
             DiffuseMap = _texturesLoader.LoadMap(diffuseMapPath),
             SpecularMap = _texturesLoader.LoadMap(specularMapPath),
         };
+
+        //for (int i = 0; i < mesh.Faces.Count; i++)
+        //{
+        //    Face face = mesh.Faces[i];
+        //    face.CalculateTbn(mesh);
+        //    mesh.Faces[i] = face;
+        //}
+
+        //return mesh;
+        
+        Dictionary<VertexInfo, TangentInfo> d = new();
+        
+        for (int i = 0; i < mesh.Faces.Count; i++)
+        {
+            Face face = mesh.Faces[i];
+            face.CalculateTbn(mesh);
+
+            mat3 tbnMatrix = face.TbnMatrix;
+            
+            for (int j = 0; j < 3; j++)
+            {
+                VertexInfo vertexInfo = new VertexInfo(face.VertIndices[j], face.TextIndices[j]);
+                if (!d.ContainsKey(vertexInfo))
+                {
+                    d.Add(vertexInfo, new TangentInfo(tbnMatrix));
+                }
+                else
+                {
+                    d[vertexInfo].Add(tbnMatrix);
+                }
+            }
+        }
+        
+        Dictionary<VertexInfo, mat3> res = new();
+        
+        foreach (var key in d.Keys)
+        {
+            res[key] = d[key].Res();
+        }
+        
+        for (int i = 0; i < mesh.Faces.Count; i++)
+        {
+            Face face = mesh.Faces[i];
+
+            mat3 resMat = new mat3(0);
+            for (int j = 0; j < 3; j++)
+            {
+                VertexInfo vertexInfo = new VertexInfo(face.VertIndices[j], face.TextIndices[j]);
+
+                resMat.add(res[vertexInfo]);
+            }
+            
+            resMat.div(3);
+
+            face.TbnMatrix = resMat;
+
+            mesh.Faces[i] = face;
+        }
+
+        return mesh;
     }
 
     private void VHandler(string[] parts)

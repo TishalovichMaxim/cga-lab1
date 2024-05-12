@@ -58,7 +58,6 @@ public class WriteableBitmapCanvas
 
     public void Clear(Color color)
     {
-
         Array.Fill(_pixelsData, (byte)0);
         //for (int i = 0; i < _writeableBitmap.Height; i++)
         //{
@@ -168,7 +167,8 @@ public class WriteableBitmapCanvas
         vec4 eye,
         mat4 model,
         float wLeft,
-        float wRight
+        float wRight,
+        Face face
         )
     {
         vec3 lightColor = new vec3(230, 230, 230);
@@ -195,7 +195,8 @@ public class WriteableBitmapCanvas
                 t
             );
 
-            vec3 normal = glm.normalize(new vec3(model * new vec4(GetTextureValue(textureCoords, mesh.NormalsMap), 1.0f)));
+            vec3 normal = glm.normalize(new vec3(model * new vec4(face.TbnMatrix * GetTextureValue(textureCoords, mesh.NormalsMap), 0.0f)));
+            //vec3 normal = glm.normalize(new vec3(model * new vec4(GetTextureValue(textureCoords, mesh.NormalsMap), 0.0f)));
             
             vec3 kd = GetTextureValue(textureCoords, mesh.DiffuseMap);
             
@@ -233,7 +234,8 @@ public class WriteableBitmapCanvas
         LightCoeffs lightCoeffs,
         vec4 lightSourcePos,
         vec4 eye,
-        mat4 model
+        mat4 model,
+        Face face
         )
     {
         if (vertex1.ScreenPos.y > vertex2.ScreenPos.y)
@@ -311,7 +313,8 @@ public class WriteableBitmapCanvas
                 eye,
                 model,
                 wLeft,
-                wRight
+                wRight,
+                face
             );
         }
 
@@ -362,7 +365,8 @@ public class WriteableBitmapCanvas
                 eye,
                 model,
                 wLeft,
-                wRight
+                wRight,
+                face
             );
         }
     }

@@ -95,7 +95,8 @@ public static class MeshDrawer
                 lightCoeffs,
                 lightPos,
                 eye,
-                model
+                model,
+                face
                 );
         }
     }
