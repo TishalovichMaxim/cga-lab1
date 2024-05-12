@@ -7,6 +7,7 @@ namespace Cga.Graphics;
 struct VertexInfo
 {
     int VertIndex;
+    
     int TextureIndex;
 
     public VertexInfo(int vertIndex, int textureIndex)
@@ -141,8 +142,15 @@ public class ObjParser
             
             resMat.div(3);
 
-            face.TbnMatrix = resMat;
+            vec3 t = glm.normalize(resMat[0]);
+            vec3 n = glm.normalize(resMat[2]);
 
+            t = glm.normalize(t - glm.dot(t, n) * n);
+
+            vec3 b = glm.cross(n, t);
+
+            face.TbnMatrix = new mat3(t, b, n);
+            
             mesh.Faces[i] = face;
         }
 
